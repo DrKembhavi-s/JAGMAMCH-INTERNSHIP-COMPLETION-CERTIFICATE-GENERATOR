@@ -1115,14 +1115,17 @@
             const studentName = document.getElementById('deptPreviewStudentName').textContent;
             const content = generateDepartmentalWordContent();
             
-            const blob = new Blob([content], {
-                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            // Create proper Word document blob
+            const blob = new Blob(['\ufeff', content], {
+                type: 'application/msword'
             });
             
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `${studentName}_Departmental_Rotation_Certificate.docx`;
+            a.download = `${studentName}_Departmental_Rotation_Certificate.doc`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
         }
 
         function generateDepartmentalWordContent() {
@@ -1132,78 +1135,125 @@
             const issueDate = document.getElementById('deptPreviewIssueDate').textContent;
             const certNumber = document.getElementById('deptPreviewCertNumber').textContent;
             
-            // Get rotation details
+            // Get rotation details in plain text
             const rotationContainer = document.getElementById('rotationDetails');
-            const rotationHTML = rotationContainer.innerHTML;
+            let rotationsText = '';
             
-            return `
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+            // Get the actual rotation data from the preview
+            const rotationElements = rotationContainer.querySelectorAll('div[style*="display: flex"]');
+            rotationElements.forEach(element => {
+                const deptName = element.querySelector('div:first-child').textContent;
+                const dates = element.querySelector('div:nth-child(2)').textContent;
+                const days = element.querySelector('div:last-child').textContent;
+                rotationsText += `• ${deptName}: ${dates} (${days})\n`;
+            });
+            
+            if (!rotationsText) {
+                rotationsText = '• No department rotations entered.\n';
+            }
+            
+            return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
-    <meta charset="utf-8">
-    <title>Departmental Rotation Certificate</title>
-    <style>
-        @page { margin: 1in; }
-        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; }
-        .center { text-align: center; }
-        .title { font-size: 18pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2pt; margin: 20pt 0; }
-        .student-name { font-size: 16pt; font-weight: bold; margin: 15pt 0; padding: 10pt; border: 2pt solid black; }
-        .details { margin: 20pt 0; }
-        .detail-item { margin: 8pt 0; }
-        .signatures { margin-top: 40pt; }
-        .signature-line { border-bottom: 1pt solid black; width: 200pt; margin: 30pt auto 5pt; }
-        .badge { background: #f0f0f0; padding: 10pt; margin: 15pt 0; font-weight: bold; }
-        .cert-info { margin: 20pt 0; }
-        .rotation-item { display: flex; justify-content: space-between; padding: 8pt; margin: 5pt 0; border-left: 3pt solid black; background: #f8f8f8; }
-        .dept-name { font-weight: bold; }
-        .dept-dates { text-align: center; }
-        .dept-days { text-align: right; font-weight: bold; }
-    </style>
+<meta charset="utf-8">
+<title>Departmental Rotation Certificate</title>
+<style>
+body { 
+    font-family: 'Times New Roman', serif; 
+    font-size: 12pt; 
+    line-height: 1.6; 
+    margin: 1in;
+    color: black;
+}
+.center { text-align: center; }
+.bold { font-weight: bold; }
+.title { 
+    font-size: 16pt; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    text-align: center;
+    margin: 20pt 0; 
+}
+.student-name { 
+    font-size: 14pt; 
+    font-weight: bold; 
+    text-align: center;
+    margin: 15pt 0; 
+    text-decoration: underline;
+}
+.details { margin: 15pt 0; }
+.detail-item { margin: 5pt 0; }
+.compliance { 
+    text-align: center; 
+    margin: 15pt 0; 
+    font-weight: bold;
+}
+.rotation-section { margin: 20pt 0; }
+.rotation-title { 
+    font-weight: bold; 
+    margin: 15pt 0 10pt 0; 
+}
+.rotation-list { margin: 10pt 0; }
+.signatures { 
+    margin-top: 50pt; 
+    text-align: center;
+}
+.signature-line { 
+    display: inline-block;
+    width: 200pt; 
+    border-bottom: 1pt solid black; 
+    margin: 30pt 50pt 5pt 50pt; 
+}
+.signature-title {
+    display: inline-block;
+    margin: 0 50pt;
+    font-weight: bold;
+}
+</style>
 </head>
 <body>
-    <div class="center">
-        <div class="title">Departmental Rotation Certificate</div>
-        
-        <div class="badge">
-            ✓ NCISM Compliant • Departmental Rotation Record • BAMS Internship Program<br>
-            NCISM College Code: AYU0484 | RGUHS College Code: A456
-        </div>
-        
-        <p>This is to certify that</p>
-        
-        <div class="student-name center">${studentName}</div>
-        
-        <p>has successfully completed departmental rotations as part of the mandatory <strong>12-month Compulsory Rotatory Internship</strong> in accordance with the regulations of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of Ayurvedic Medicine and Surgery (BAMS) degree program.</p>
-    </div>
-    
-    <div class="details">
-        <div class="detail-item"><strong>Registration Number:</strong> ${regNo}</div>
-        <div class="detail-item"><strong>Academic Year:</strong> ${academicYear}</div>
-    </div>
-    
-    <h3>Department-wise Rotation Details:</h3>
-    <div id="rotationDetails">
-        ${rotationHTML.replace(/<div style="[^"]*"/g, '<div class="rotation-item"').replace(/style="[^"]*"/g, '')}
-    </div>
-    
-    <p>The above departmental rotations were completed under proper supervision and guidance, ensuring comprehensive clinical exposure and practical training in various specialties of Ayurveda as mandated by the NCISM curriculum.</p>
-    
-    <div class="cert-info">
-        <div><strong>Date of Issue:</strong> ${issueDate}</div>
-        <div><strong>Place:</strong> Varur</div>
-        <div><strong>Certificate No:</strong> ${certNumber}</div>
-    </div>
-    
-    <div class="signatures center">
-        <div style="display: inline-block; margin: 0 50pt;">
-            <div class="signature-line"></div>
-            <div>Medical Superintendent</div>
-        </div>
-        <div style="display: inline-block; margin: 0 50pt;">
-            <div class="signature-line"></div>
-            <div>Dean/Principal</div>
-        </div>
-    </div>
+<div class="title">DEPARTMENTAL ROTATION CERTIFICATE</div>
+
+<div class="compliance">✓ NCISM Compliant • Departmental Rotation Record • BAMS Internship Program<br>
+NCISM College Code: AYU0484 | RGUHS College Code: A456</div>
+
+<div class="center">
+<p>This is to certify that</p>
+
+<div class="student-name">${studentName}</div>
+
+<p>has successfully completed departmental rotations as part of the mandatory <span class="bold">12-month Compulsory Rotatory Internship</span> in accordance with the regulations of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of Ayurvedic Medicine and Surgery (BAMS) degree program.</p>
+</div>
+
+<div class="details">
+<p class="bold">STUDENT DETAILS:</p>
+<div class="detail-item">• Registration Number: ${regNo}</div>
+<div class="detail-item">• Academic Year: ${academicYear}</div>
+<div class="detail-item">• NCISM College Code: AYU0484</div>
+<div class="detail-item">• RGUHS College Code: A456</div>
+</div>
+
+<div class="rotation-section">
+<p class="rotation-title">DEPARTMENT-WISE ROTATION DETAILS:</p>
+<div class="rotation-list">
+${rotationsText.split('\n').filter(line => line.trim()).map(line => `<div class="detail-item">${line}</div>`).join('')}
+</div>
+</div>
+
+<p>The above departmental rotations were completed under proper supervision and guidance, ensuring comprehensive clinical exposure and practical training in various specialties of Ayurveda as mandated by the NCISM curriculum.</p>
+
+<p><span class="bold">Date of Issue:</span> ${issueDate} &nbsp;&nbsp;&nbsp; <span class="bold">Place:</span> Varur &nbsp;&nbsp;&nbsp; <span class="bold">Certificate No:</span> ${certNumber}</p>
+
+<div class="signatures">
+<div>
+<div class="signature-line"></div>
+<div class="signature-line"></div>
+</div>
+<div>
+<span class="signature-title">Medical Superintendent</span>
+<span class="signature-title">Dean/Principal</span>
+</div>
+</div>
+
 </body>
 </html>`;
         }
@@ -1337,14 +1387,17 @@ Jane Smith,REG002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025`;
             const studentName = document.getElementById('previewStudentName').textContent;
             const content = generateWordContent();
             
-            const blob = new Blob([content], {
-                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            // Create proper Word document blob
+            const blob = new Blob(['\ufeff', content], {
+                type: 'application/msword'
             });
             
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `${studentName}_Internship_Certificate.docx`;
+            a.download = `${studentName}_Internship_Certificate.doc`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
         }
 
         function generateWordContent() {
@@ -1356,72 +1409,100 @@ Jane Smith,REG002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025`;
             const issueDate = document.getElementById('previewIssueDate').textContent;
             const certNumber = document.getElementById('previewCertNumber').textContent;
             
-            return `
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+            return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
-    <meta charset="utf-8">
-    <title>Internship Certificate</title>
-    <style>
-        @page { margin: 1in; }
-        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; }
-        .center { text-align: center; }
-        .title { font-size: 18pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2pt; margin: 20pt 0; }
-        .student-name { font-size: 16pt; font-weight: bold; margin: 15pt 0; padding: 10pt; border: 2pt solid black; }
-        .details { margin: 20pt 0; }
-        .detail-item { margin: 8pt 0; }
-        .signatures { margin-top: 40pt; }
-        .signature-line { border-bottom: 1pt solid black; width: 200pt; margin: 30pt auto 5pt; }
-        .badge { background: #f0f0f0; padding: 10pt; margin: 15pt 0; font-weight: bold; }
-        .cert-info { margin: 20pt 0; }
-    </style>
+<meta charset="utf-8">
+<title>Internship Certificate</title>
+<style>
+body { 
+    font-family: 'Times New Roman', serif; 
+    font-size: 12pt; 
+    line-height: 1.6; 
+    margin: 1in;
+    color: black;
+}
+.center { text-align: center; }
+.bold { font-weight: bold; }
+.title { 
+    font-size: 16pt; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    text-align: center;
+    margin: 20pt 0; 
+}
+.student-name { 
+    font-size: 14pt; 
+    font-weight: bold; 
+    text-align: center;
+    margin: 15pt 0; 
+    text-decoration: underline;
+}
+.details { margin: 15pt 0; }
+.detail-item { margin: 5pt 0; }
+.compliance { 
+    text-align: center; 
+    margin: 15pt 0; 
+    font-weight: bold;
+}
+.signatures { 
+    margin-top: 50pt; 
+    text-align: center;
+}
+.signature-line { 
+    display: inline-block;
+    width: 200pt; 
+    border-bottom: 1pt solid black; 
+    margin: 30pt 50pt 5pt 50pt; 
+}
+.signature-title {
+    display: inline-block;
+    margin: 0 50pt;
+    font-weight: bold;
+}
+</style>
 </head>
 <body>
-    <div class="center">
-        <div class="title">Internship Completion Certificate</div>
-        
-        <div class="badge">
-            ✓ NCISM Compliant • 12-Month Compulsory Rotatory Internship • BAMS Program<br>
-            NCISM College Code: AYU0484 | RGUHS College Code: A456
-        </div>
-        
-        <p>This is to certify that</p>
-        
-        <div class="student-name center">${studentName}</div>
-        
-        <p>has successfully completed the mandatory <strong>12-month Compulsory Rotatory Internship</strong> as required under the regulations of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of Ayurvedic Medicine and Surgery (BAMS) degree program.</p>
-    </div>
-    
-    <div class="details">
-        <div class="detail-item"><strong>Registration Number:</strong> ${regNo}</div>
-        <div class="detail-item"><strong>Internship Start Date:</strong> ${startDate}</div>
-        <div class="detail-item"><strong>Internship Completion Date:</strong> ${endDate}</div>
-        <div class="detail-item"><strong>Duration:</strong> 12 Months (365 Days)</div>
-        <div class="detail-item"><strong>Academic Year:</strong> ${academicYear}</div>
-        <div class="detail-item"><strong>NCISM College Code:</strong> AYU0484</div>
-        <div class="detail-item"><strong>RGUHS College Code:</strong> A456</div>
-    </div>
-    
-    <p>The internship was conducted in accordance with the NCISM regulations and included rotations in various departments of Ayurveda including Kayachikitsa, Panchakarma, Shalya Tantra, Shalakya Tantra, Prasuti Tantra & Stree Rog, and Kaumarbhritya, along with community health settings as mandated by the curriculum.</p>
-    
-    <p>The candidate has demonstrated satisfactory performance and clinical competency during the internship period and is eligible for registration with the respective State Medical Council/Board.</p>
-    
-    <div class="cert-info">
-        <div><strong>Date of Issue:</strong> ${issueDate}</div>
-        <div><strong>Place:</strong> Varur</div>
-        <div><strong>Certificate No:</strong> ${certNumber}</div>
-    </div>
-    
-    <div class="signatures center">
-        <div style="display: inline-block; margin: 0 50pt;">
-            <div class="signature-line"></div>
-            <div>Medical Superintendent</div>
-        </div>
-        <div style="display: inline-block; margin: 0 50pt;">
-            <div class="signature-line"></div>
-            <div>Dean/Principal</div>
-        </div>
-    </div>
+<div class="title">INTERNSHIP COMPLETION CERTIFICATE</div>
+
+<div class="compliance">✓ NCISM Compliant • 12-Month Compulsory Rotatory Internship • BAMS Program<br>
+NCISM College Code: AYU0484 | RGUHS College Code: A456</div>
+
+<div class="center">
+<p>This is to certify that</p>
+
+<div class="student-name">${studentName}</div>
+
+<p>has successfully completed the mandatory <span class="bold">12-month Compulsory Rotatory Internship</span> as required under the regulations of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of Ayurvedic Medicine and Surgery (BAMS) degree program.</p>
+</div>
+
+<div class="details">
+<p class="bold">INTERNSHIP DETAILS:</p>
+<div class="detail-item">• Registration Number: ${regNo}</div>
+<div class="detail-item">• Internship Start Date: ${startDate}</div>
+<div class="detail-item">• Internship Completion Date: ${endDate}</div>
+<div class="detail-item">• Duration: 12 Months (365 Days)</div>
+<div class="detail-item">• Academic Year: ${academicYear}</div>
+<div class="detail-item">• NCISM College Code: AYU0484</div>
+<div class="detail-item">• RGUHS College Code: A456</div>
+</div>
+
+<p>The internship was conducted in accordance with the NCISM regulations and included rotations in various departments of Ayurveda including Kayachikitsa, Panchakarma, Shalya Tantra, Shalakya Tantra, Prasuti Tantra & Stree Rog, and Kaumarbhritya, along with community health settings as mandated by the curriculum.</p>
+
+<p>The candidate has demonstrated satisfactory performance and clinical competency during the internship period and is eligible for registration with the respective State Medical Council/Board.</p>
+
+<p><span class="bold">Date of Issue:</span> ${issueDate} &nbsp;&nbsp;&nbsp; <span class="bold">Place:</span> Varur &nbsp;&nbsp;&nbsp; <span class="bold">Certificate No:</span> ${certNumber}</p>
+
+<div class="signatures">
+<div>
+<div class="signature-line"></div>
+<div class="signature-line"></div>
+</div>
+<div>
+<span class="signature-title">Medical Superintendent</span>
+<span class="signature-title">Dean/Principal</span>
+</div>
+</div>
+
 </body>
 </html>`;
         }
