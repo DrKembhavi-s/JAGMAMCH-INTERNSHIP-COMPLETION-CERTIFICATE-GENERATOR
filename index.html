@@ -373,6 +373,7 @@
         <div class="main-content">
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('single')">Single Certificate</button>
+                <button class="tab" onclick="switchTab('departmental')">Departmental Rotation</button>
                 <button class="tab" onclick="switchTab('bulk')">Bulk Upload</button>
                 <button class="tab" onclick="switchTab('manage')">Manage Students</button>
             </div>
@@ -427,6 +428,52 @@
                         <button type="button" class="btn btn-success" onclick="printCertificate()">Print Certificate</button>
                         <button type="button" class="btn btn-secondary" onclick="downloadPDF()">Download PDF</button>
                         <button type="button" class="btn btn-secondary" onclick="downloadWord()">Download Word</button>
+                        <button type="button" class="btn" onclick="copyToRotationTab()" style="background: #17a2b8; color: white;">→ Create Rotation Certificate</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Departmental Rotation Certificate Tab -->
+            <div id="departmental-tab" class="tab-content">
+                <h2>Departmental Rotation Certificate</h2>
+                <form id="departmental-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="deptStudentName">Student Name *</label>
+                            <input type="text" id="deptStudentName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="deptRegistrationNo">Registration Number *</label>
+                            <input type="text" id="deptRegistrationNo" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="deptAcademicYear">Academic Year *</label>
+                            <input type="text" id="deptAcademicYear" placeholder="e.g., 2024-25" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="deptCertNumber">Certificate Number *</label>
+                            <input type="text" id="deptCertNumber" placeholder="JAGMAMCH/001/2025" readonly>
+                            <button type="button" class="btn btn-secondary" onclick="generateDeptCertNumber()" style="margin-top: 5px;">Auto Generate</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="deptIssueDate">Certificate Issue Date *</label>
+                        <input type="date" id="deptIssueDate" required>
+                    </div>
+                    
+                    <h3 style="margin: 30px 0 20px; color: #667eea;">Department Rotations</h3>
+                    <div id="departmentRotations">
+                        <!-- Department rotation fields will be dynamically generated -->
+                    </div>
+                    
+                    <div class="actions">
+                        <button type="button" class="btn btn-primary" onclick="generateDepartmentalPreview()">Generate Preview</button>
+                        <button type="button" class="btn btn-success" onclick="printDepartmentalCertificate()">Print Certificate</button>
+                        <button type="button" class="btn btn-secondary" onclick="downloadDepartmentalPDF()">Download PDF</button>
+                        <button type="button" class="btn btn-secondary" onclick="downloadDepartmentalWord()">Download Word</button>
+                        <button type="button" class="btn" onclick="copyToMainTab()" style="background: #17a2b8; color: white;">← Create Main Certificate</button>
                     </div>
                 </form>
             </div>
@@ -443,9 +490,9 @@
                 
                 <div class="sample-csv">
                     <strong>CSV Format Example:</strong><br>
-                    StudentName,RegistrationNo,RollNumber,AcademicYear,StartDate,EndDate,IssueDate,CertNumber<br>
-                    John Doe,REG001,ROLL001,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/001/2025<br>
-                    Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025
+                    StudentName,RegistrationNo,AcademicYear,StartDate,EndDate,IssueDate,CertNumber<br>
+                    John Doe,REG001,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/001/2025<br>
+                    Jane Smith,REG002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025
                 </div>
 
                 <div class="progress-bar hidden" id="progressBar">
@@ -501,10 +548,6 @@
                             <div class="detail-item">
                                 <div class="detail-label">Registration Number</div>
                                 <div class="detail-value" id="previewRegNo">[Registration No.]</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">University Roll Number</div>
-                                <div class="detail-value" id="previewRollNo">[Roll Number]</div>
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Internship Start Date</div>
@@ -563,6 +606,72 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Departmental Rotation Preview -->
+            <div id="departmentalPreview" class="hidden" style="margin-top: 30px;">
+                <h2 style="text-align: center; margin-bottom: 20px;">Departmental Rotation Certificate Preview</h2>
+                <div class="certificate-preview">
+                    <div class="cert-header">
+                        <div class="cert-title">Departmental Rotation Certificate</div>
+                    </div>
+                    <div class="cert-content">
+                        <div class="ncism-badge">
+                            ✓ NCISM Compliant • Departmental Rotation Record • BAMS Internship Program<br>
+                            <small>NCISM College Code: AYU0484 | RGUHS College Code: A456</small>
+                        </div>
+                        
+                        <p style="text-align: center; margin: 20px 0;">This is to certify that</p>
+                        
+                        <div class="student-name-display" id="deptPreviewStudentName">[Student Name]</div>
+                        
+                        <p style="text-align: center; margin: 20px 0;">
+                            has successfully completed departmental rotations as part of the mandatory 
+                            <strong>12-month Compulsory Rotatory Internship</strong> in accordance with the regulations 
+                            of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of 
+                            Ayurvedic Medicine and Surgery (BAMS) degree program.
+                        </p>
+                        
+                        <div style="margin: 30px 0;">
+                            <div class="detail-item" style="margin-bottom: 15px;">
+                                <div class="detail-label">Registration Number</div>
+                                <div class="detail-value" id="deptPreviewRegNo">[Registration No.]</div>
+                            </div>
+                            <div class="detail-item" style="margin-bottom: 15px;">
+                                <div class="detail-label">Academic Year</div>
+                                <div class="detail-value" id="deptPreviewAcademicYear">[Academic Year]</div>
+                            </div>
+                        </div>
+                        
+                        <h3 style="color: #667eea; margin: 25px 0 15px;">Department-wise Rotation Details:</h3>
+                        <div id="rotationDetails" style="margin: 20px 0;">
+                            <!-- Rotation details will be populated here -->
+                        </div>
+                        
+                        <p style="margin: 25px 0;">
+                            The above departmental rotations were completed under proper supervision and guidance, 
+                            ensuring comprehensive clinical exposure and practical training in various specialties 
+                            of Ayurveda as mandated by the NCISM curriculum.
+                        </p>
+
+                        <p style="margin: 25px 0;">
+                            <strong>Date of Issue:</strong> <span id="deptPreviewIssueDate">[Issue Date]</span><br>
+                            <strong>Place:</strong> Varur<br>
+                            <strong>Certificate No:</strong> <span id="deptPreviewCertNumber">[Certificate Number]</span>
+                        </p>
+                        
+                        <div class="signatures">
+                            <div class="signature-block">
+                                <div class="signature-line"></div>
+                                <div class="signature-title">Medical Superintendent</div>
+                            </div>
+                            <div class="signature-block">
+                                <div class="signature-line"></div>
+                                <div class="signature-title">Dean/Principal</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -571,11 +680,36 @@
         let studentsData = [];
         let certificateCounter = 1;
         
+        // Department list
+        const departments = [
+            'KAYACHIKITSA',
+            'PANCHAKARMA', 
+            'SHALYA TANTRA',
+            'SHALAKYA TANTRA',
+            'PRASUTI TANTRA & STREE ROGA',
+            'KAUMARABHRITYA',
+            'SWASTHAVRITTA',
+            'ATYAYIKA',
+            'SCREENING',
+            'LABORATORY',
+            'PHARMACY',
+            'AYUSH POSTING',
+            'MODERN HOSPITALS'
+        ];
+
         // Auto Certificate Numbering Functions
         function generateCertNumber() {
             const currentYear = new Date().getFullYear();
             const certNumber = `JAGMAMCH/${String(certificateCounter).padStart(3, '0')}/${currentYear}`;
             document.getElementById('certNumber').value = certNumber;
+            certificateCounter++;
+            localStorage.setItem('certificateCounter', certificateCounter);
+        }
+
+        function generateDeptCertNumber() {
+            const currentYear = new Date().getFullYear();
+            const certNumber = `JAGMAMCH/DEPT/${String(certificateCounter).padStart(3, '0')}/${currentYear}`;
+            document.getElementById('deptCertNumber').value = certNumber;
             certificateCounter++;
             localStorage.setItem('certificateCounter', certificateCounter);
         }
@@ -602,15 +736,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Set default issue date to today
             document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('deptIssueDate').value = new Date().toISOString().split('T')[0];
             
             // Load saved data first
             loadSavedData();
             
-            // Generate initial certificate number
+            // Generate initial certificate numbers
             generateCertNumber();
+            generateDeptCertNumber();
             
             // Setup CSV upload
             setupCSVUpload();
+            
+            // Generate department rotation fields
+            generateDepartmentFields();
         });
 
         function loadSavedData() {
@@ -720,10 +859,11 @@
                 <div class="student-item">
                     <div class="student-info">
                         <div class="student-name">${student.StudentName}</div>
-                        <div class="student-details">Reg: ${student.RegistrationNo} | Roll: ${student.RollNumber} | ${student.AcademicYear}</div>
+                        <div class="student-details">Reg: ${student.RegistrationNo} | ${student.AcademicYear}</div>
                     </div>
                     <div>
-                        <button class="btn btn-primary" onclick="generateSingleFromData(${index})">Generate</button>
+                        <button class="btn btn-primary" onclick="generateSingleFromData(${index})">Generate Main</button>
+                        <button class="btn" onclick="generateRotationFromData(${index})" style="background: #17a2b8; color: white;">Generate Rotation</button>
                         <button class="btn btn-secondary" onclick="downloadSinglePDF(${index})">PDF</button>
                         <button class="btn btn-secondary" onclick="downloadSingleWord(${index})">Word</button>
                         <button class="btn btn-secondary" onclick="removeStudent(${index})">Remove</button>
@@ -742,7 +882,6 @@
             const data = {
                 StudentName: document.getElementById('studentName').value,
                 RegistrationNo: document.getElementById('registrationNo').value,
-                RollNumber: document.getElementById('rollNumber').value,
                 AcademicYear: document.getElementById('academicYear').value,
                 StartDate: formatDate(document.getElementById('startDate').value),
                 EndDate: formatDate(document.getElementById('endDate').value),
@@ -758,12 +897,315 @@
         function populatePreview(data) {
             document.getElementById('previewStudentName').textContent = data.StudentName;
             document.getElementById('previewRegNo').textContent = data.RegistrationNo;
-            document.getElementById('previewRollNo').textContent = data.RollNumber;
             document.getElementById('previewStartDate').textContent = data.StartDate;
             document.getElementById('previewEndDate').textContent = data.EndDate;
             document.getElementById('previewAcademicYear').textContent = data.AcademicYear;
             document.getElementById('previewIssueDate').textContent = data.IssueDate;
             document.getElementById('previewCertNumber').textContent = data.CertNumber;
+        }
+
+        function generateDepartmentFields() {
+            const container = document.getElementById('departmentRotations');
+            container.innerHTML = departments.map(dept => `
+                <div class="form-row" style="align-items: end; margin-bottom: 15px; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; background: #f8f9fa;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label><strong>${dept}</strong></label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.85rem; margin-bottom: 5px;">From Date</label>
+                                <input type="date" id="${dept.replace(/[^A-Z0-9]/g, '_')}_from" style="padding: 8px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.85rem; margin-bottom: 5px;">To Date</label>
+                                <input type="date" id="${dept.replace(/[^A-Z0-9]/g, '_')}_to" style="padding: 8px;">
+                            </div>
+                            <div style="flex: 0.8;">
+                                <label style="font-size: 0.85rem; margin-bottom: 5px;">Days</label>
+                                <input type="number" id="${dept.replace(/[^A-Z0-9]/g, '_')}_days" placeholder="Days" style="padding: 8px;" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add event listeners to calculate days automatically
+            departments.forEach(dept => {
+                const deptId = dept.replace(/[^A-Z0-9]/g, '_');
+                const fromInput = document.getElementById(`${deptId}_from`);
+                const toInput = document.getElementById(`${deptId}_to`);
+                const daysInput = document.getElementById(`${deptId}_days`);
+                
+                function calculateDays() {
+                    if (fromInput.value && toInput.value) {
+                        const from = new Date(fromInput.value);
+                        const to = new Date(toInput.value);
+                        const timeDiff = to.getTime() - from.getTime();
+                        const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+                        daysInput.value = dayDiff > 0 ? dayDiff : '';
+                    } else {
+                        daysInput.value = '';
+                    }
+                }
+                
+                fromInput.addEventListener('change', calculateDays);
+                toInput.addEventListener('change', calculateDays);
+            });
+        }
+
+        // Departmental Certificate Functions
+        function generateDepartmentalPreview() {
+            const form = document.getElementById('departmental-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const data = {
+                StudentName: document.getElementById('deptStudentName').value,
+                RegistrationNo: document.getElementById('deptRegistrationNo').value,
+                AcademicYear: document.getElementById('deptAcademicYear').value,
+                IssueDate: formatDate(document.getElementById('deptIssueDate').value),
+                CertNumber: document.getElementById('deptCertNumber').value
+            };
+            
+            // Collect department rotation data
+            const rotations = [];
+            departments.forEach(dept => {
+                const deptId = dept.replace(/[^A-Z0-9]/g, '_');
+                const fromDate = document.getElementById(`${deptId}_from`).value;
+                const toDate = document.getElementById(`${deptId}_to`).value;
+                const days = document.getElementById(`${deptId}_days`).value;
+                
+                if (fromDate && toDate && days) {
+                    rotations.push({
+                        department: dept,
+                        from: formatDate(fromDate),
+                        to: formatDate(toDate),
+                        days: days
+                    });
+                }
+            });
+            
+            data.rotations = rotations;
+            populateDepartmentalPreview(data);
+            document.getElementById('departmentalPreview').classList.remove('hidden');
+            document.getElementById('departmentalPreview').scrollIntoView({behavior: 'smooth'});
+        }
+
+        // Cross-tab data copying functions
+        function copyToRotationTab() {
+            const studentName = document.getElementById('studentName').value;
+            const registrationNo = document.getElementById('registrationNo').value;
+            const academicYear = document.getElementById('academicYear').value;
+            
+            if (!studentName || !registrationNo) {
+                alert('Please fill in student name and registration number first');
+                return;
+            }
+            
+            // Switch to departmental tab
+            switchTab('departmental');
+            
+            // Fill in the data
+            document.getElementById('deptStudentName').value = studentName;
+            document.getElementById('deptRegistrationNo').value = registrationNo;
+            document.getElementById('deptAcademicYear').value = academicYear;
+            
+            // Generate certificate number if not already done
+            if (!document.getElementById('deptCertNumber').value) {
+                generateDeptCertNumber();
+            }
+            
+            alert('✅ Student data copied! Now fill in the department rotation details.');
+        }
+
+        function copyToMainTab() {
+            const studentName = document.getElementById('deptStudentName').value;
+            const registrationNo = document.getElementById('deptRegistrationNo').value;
+            const academicYear = document.getElementById('deptAcademicYear').value;
+            
+            if (!studentName || !registrationNo) {
+                alert('Please fill in student name and registration number first');
+                return;
+            }
+            
+            // Switch to single tab
+            switchTab('single');
+            
+            // Fill in the data
+            document.getElementById('studentName').value = studentName;
+            document.getElementById('registrationNo').value = registrationNo;
+            document.getElementById('academicYear').value = academicYear;
+            
+            alert('✅ Student data copied! Now fill in the internship start/end dates.');
+        }
+
+        function generateRotationFromData(index) {
+            const student = studentsData[index];
+            
+            // Switch to departmental tab
+            switchTab('departmental');
+            
+            // Fill in the data
+            document.getElementById('deptStudentName').value = student.StudentName;
+            document.getElementById('deptRegistrationNo').value = student.RegistrationNo;
+            document.getElementById('deptAcademicYear').value = student.AcademicYear;
+            
+            // Generate certificate number
+            generateDeptCertNumber();
+            
+            alert(`✅ ${student.StudentName}'s data loaded for rotation certificate! Fill in department rotation details and generate.`);
+        }
+
+        function populateDepartmentalPreview(data) {
+            document.getElementById('deptPreviewStudentName').textContent = data.StudentName;
+            document.getElementById('deptPreviewRegNo').textContent = data.RegistrationNo;
+            document.getElementById('deptPreviewAcademicYear').textContent = data.AcademicYear;
+            document.getElementById('deptPreviewIssueDate').textContent = data.IssueDate;
+            document.getElementById('deptPreviewCertNumber').textContent = data.CertNumber;
+            
+            // Populate rotation details
+            const rotationContainer = document.getElementById('rotationDetails');
+            if (data.rotations.length === 0) {
+                rotationContainer.innerHTML = '<p style="color: #6c757d; font-style: italic;">No department rotations entered.</p>';
+            } else {
+                rotationContainer.innerHTML = data.rotations.map(rotation => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin: 8px 0; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+                        <div style="flex: 2; font-weight: 600; color: #495057;">${rotation.department}</div>
+                        <div style="flex: 1; text-align: center; color: #6c757d;">${rotation.from} to ${rotation.to}</div>
+                        <div style="flex: 0.5; text-align: center; font-weight: 600; color: #667eea;">${rotation.days} days</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function printDepartmentalCertificate() {
+            if (document.getElementById('departmentalPreview').classList.contains('hidden')) {
+                alert('Please generate a preview first');
+                return;
+            }
+            window.print();
+        }
+
+        function downloadDepartmentalPDF() {
+            if (document.getElementById('departmentalPreview').classList.contains('hidden')) {
+                alert('Please generate a preview first');
+                return;
+            }
+            
+            const studentName = document.getElementById('deptPreviewStudentName').textContent;
+            const element = document.querySelector('#departmentalPreview .certificate-preview');
+            const opt = {
+                margin: 0.5,
+                filename: `${studentName}_Departmental_Rotation_Certificate.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function downloadDepartmentalWord() {
+            if (document.getElementById('departmentalPreview').classList.contains('hidden')) {
+                alert('Please generate a preview first');
+                return;
+            }
+            
+            const studentName = document.getElementById('deptPreviewStudentName').textContent;
+            const content = generateDepartmentalWordContent();
+            
+            const blob = new Blob([content], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+            
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${studentName}_Departmental_Rotation_Certificate.docx`;
+            a.click();
+        }
+
+        function generateDepartmentalWordContent() {
+            const studentName = document.getElementById('deptPreviewStudentName').textContent;
+            const regNo = document.getElementById('deptPreviewRegNo').textContent;
+            const academicYear = document.getElementById('deptPreviewAcademicYear').textContent;
+            const issueDate = document.getElementById('deptPreviewIssueDate').textContent;
+            const certNumber = document.getElementById('deptPreviewCertNumber').textContent;
+            
+            // Get rotation details
+            const rotationContainer = document.getElementById('rotationDetails');
+            const rotationHTML = rotationContainer.innerHTML;
+            
+            return `
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+    <meta charset="utf-8">
+    <title>Departmental Rotation Certificate</title>
+    <style>
+        @page { margin: 1in; }
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; }
+        .center { text-align: center; }
+        .title { font-size: 18pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2pt; margin: 20pt 0; }
+        .student-name { font-size: 16pt; font-weight: bold; margin: 15pt 0; padding: 10pt; border: 2pt solid black; }
+        .details { margin: 20pt 0; }
+        .detail-item { margin: 8pt 0; }
+        .signatures { margin-top: 40pt; }
+        .signature-line { border-bottom: 1pt solid black; width: 200pt; margin: 30pt auto 5pt; }
+        .badge { background: #f0f0f0; padding: 10pt; margin: 15pt 0; font-weight: bold; }
+        .cert-info { margin: 20pt 0; }
+        .rotation-item { display: flex; justify-content: space-between; padding: 8pt; margin: 5pt 0; border-left: 3pt solid black; background: #f8f8f8; }
+        .dept-name { font-weight: bold; }
+        .dept-dates { text-align: center; }
+        .dept-days { text-align: right; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <div class="title">Departmental Rotation Certificate</div>
+        
+        <div class="badge">
+            ✓ NCISM Compliant • Departmental Rotation Record • BAMS Internship Program<br>
+            NCISM College Code: AYU0484 | RGUHS College Code: A456
+        </div>
+        
+        <p>This is to certify that</p>
+        
+        <div class="student-name center">${studentName}</div>
+        
+        <p>has successfully completed departmental rotations as part of the mandatory <strong>12-month Compulsory Rotatory Internship</strong> in accordance with the regulations of the National Commission for Indian System of Medicine (NCISM) for the Bachelor of Ayurvedic Medicine and Surgery (BAMS) degree program.</p>
+    </div>
+    
+    <div class="details">
+        <div class="detail-item"><strong>Registration Number:</strong> ${regNo}</div>
+        <div class="detail-item"><strong>Academic Year:</strong> ${academicYear}</div>
+    </div>
+    
+    <h3>Department-wise Rotation Details:</h3>
+    <div id="rotationDetails">
+        ${rotationHTML.replace(/<div style="[^"]*"/g, '<div class="rotation-item"').replace(/style="[^"]*"/g, '')}
+    </div>
+    
+    <p>The above departmental rotations were completed under proper supervision and guidance, ensuring comprehensive clinical exposure and practical training in various specialties of Ayurveda as mandated by the NCISM curriculum.</p>
+    
+    <div class="cert-info">
+        <div><strong>Date of Issue:</strong> ${issueDate}</div>
+        <div><strong>Place:</strong> Varur</div>
+        <div><strong>Certificate No:</strong> ${certNumber}</div>
+    </div>
+    
+    <div class="signatures center">
+        <div style="display: inline-block; margin: 0 50pt;">
+            <div class="signature-line"></div>
+            <div>Medical Superintendent</div>
+        </div>
+        <div style="display: inline-block; margin: 0 50pt;">
+            <div class="signature-line"></div>
+            <div>Dean/Principal</div>
+        </div>
+    </div>
+</body>
+</html>`;
         }
 
         function printCertificate() {
@@ -779,7 +1221,6 @@
             populatePreview({
                 StudentName: student.StudentName,
                 RegistrationNo: student.RegistrationNo,
-                RollNumber: student.RollNumber,
                 AcademicYear: student.AcademicYear,
                 StartDate: formatDate(student.StartDate),
                 EndDate: formatDate(student.EndDate),
@@ -808,7 +1249,6 @@
                     populatePreview({
                         StudentName: student.StudentName,
                         RegistrationNo: student.RegistrationNo,
-                        RollNumber: student.RollNumber,
                         AcademicYear: student.AcademicYear,
                         StartDate: formatDate(student.StartDate),
                         EndDate: formatDate(student.EndDate),
@@ -846,9 +1286,9 @@
         }
 
         function downloadCSVTemplate() {
-            const csvContent = `StudentName,RegistrationNo,RollNumber,AcademicYear,StartDate,EndDate,IssueDate,CertNumber
-John Doe,REG001,ROLL001,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/001/2025
-Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025`;
+            const csvContent = `StudentName,RegistrationNo,AcademicYear,StartDate,EndDate,IssueDate,CertNumber
+John Doe,REG001,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/001/2025
+Jane Smith,REG002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/2025`;
             
             downloadFile(csvContent, 'certificate_template.csv', 'text/csv');
         }
@@ -910,7 +1350,6 @@ Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/
         function generateWordContent() {
             const studentName = document.getElementById('previewStudentName').textContent;
             const regNo = document.getElementById('previewRegNo').textContent;
-            const rollNo = document.getElementById('previewRollNo').textContent;
             const startDate = document.getElementById('previewStartDate').textContent;
             const endDate = document.getElementById('previewEndDate').textContent;
             const academicYear = document.getElementById('previewAcademicYear').textContent;
@@ -955,7 +1394,6 @@ Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/
     
     <div class="details">
         <div class="detail-item"><strong>Registration Number:</strong> ${regNo}</div>
-        <div class="detail-item"><strong>University Roll Number:</strong> ${rollNo}</div>
         <div class="detail-item"><strong>Internship Start Date:</strong> ${startDate}</div>
         <div class="detail-item"><strong>Internship Completion Date:</strong> ${endDate}</div>
         <div class="detail-item"><strong>Duration:</strong> 12 Months (365 Days)</div>
@@ -1002,7 +1440,6 @@ Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/
                     populatePreview({
                         StudentName: student.StudentName,
                         RegistrationNo: student.RegistrationNo,
-                        RollNumber: student.RollNumber,
                         AcademicYear: student.AcademicYear,
                         StartDate: formatDate(student.StartDate),
                         EndDate: formatDate(student.EndDate),
@@ -1052,7 +1489,6 @@ Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/
             populatePreview({
                 StudentName: student.StudentName,
                 RegistrationNo: student.RegistrationNo,
-                RollNumber: student.RollNumber,
                 AcademicYear: student.AcademicYear,
                 StartDate: formatDate(student.StartDate),
                 EndDate: formatDate(student.EndDate),
@@ -1071,7 +1507,6 @@ Jane Smith,REG002,ROLL002,2024-25,2024-01-15,2025-01-14,2025-02-01,JAGMAMCH/002/
             populatePreview({
                 StudentName: student.StudentName,
                 RegistrationNo: student.RegistrationNo,
-                RollNumber: student.RollNumber,
                 AcademicYear: student.AcademicYear,
                 StartDate: formatDate(student.StartDate),
                 EndDate: formatDate(student.EndDate),
